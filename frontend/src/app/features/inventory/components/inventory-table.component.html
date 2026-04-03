@@ -1,0 +1,53 @@
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        @for (header of tableHeaders(); track header.key) {
+          <th
+            tabindex="0"
+            role="button"
+            [class.is-sorted]="isSorted(header.key)"
+            [class.is-ascending]="sortDirectionFor(header.key) === 'asc'"
+            [class.is-descending]="sortDirectionFor(header.key) === 'desc'"
+            (click)="sortRequested.emit(header.key)"
+            (keydown)="onHeaderKeydown($event, header.key)"
+          >
+            {{ header.label }}
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.group_key) {
+        <tr class="table-row" (click)="rowSelected.emit(row.id)">
+          <td class="cell cell--compact cell--check">
+            <strong
+              [class]="consistencyBadgeClass(row.consistency_status)"
+              (mouseenter)="onCheckEnter($event, row)"
+              (mousemove)="tooltipMoved.emit($event)"
+              (mouseleave)="tooltipHidden.emit()"
+            >{{ consistencyBadgeLabel(row.consistency_status) }}</strong>
+          </td>
+          <td class="cell cell--compact"><strong>{{ row.group_key }}</strong></td>
+          <td class="cell cell--compact"><strong>{{ row.hardlink_count }}</strong></td>
+          <td class="cell cell--flag"><strong>{{ row.has_downloads ? '✓' : '—' }}</strong></td>
+          <td class="cell cell--flag cell--torrent" (mouseenter)="onTrackerEnter($event, row)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()"><strong>{{ torrentBadge(row) }}</strong></td>
+          <td class="cell cell--flag"><strong>{{ row.has_movies ? '✓' : '—' }}</strong></td>
+          <td class="cell cell--flag"><strong>{{ row.has_radarr ? '✓' : '—' }}</strong></td>
+          <td class="cell cell--flag"><strong>{{ row.has_tv ? '✓' : '—' }}</strong></td>
+          <td class="cell cell--flag"><strong>{{ row.has_sonarr ? '✓' : '—' }}</strong></td>
+          <td class="cell cell--flag"><strong>{{ row.has_music ? '✓' : '—' }}</strong></td>
+          <td class="cell cell--files">
+            <strong>{{ row.filenames_display || '—' }}</strong>
+          </td>
+          <td class="cell cell--compact"><strong>{{ row.size_bytes_display }}</strong></td>
+          <td class="cell cell--compact cell--type"><strong [class]="fileTypeBadgeClass(row.file_type)">{{ row.file_type }}</strong></td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="13" class="empty">No inventory loaded yet.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

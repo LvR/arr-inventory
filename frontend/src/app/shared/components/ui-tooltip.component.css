@@ -1,0 +1,27 @@
+:host {
+  display: contents;
+}
+
+.ui-tooltip {
+  position: fixed;
+  z-index: 40;
+  max-width: 320px;
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  background: rgba(22, 24, 27, 0.97);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.ui-tooltip strong {
+  color: var(--text);
+  font-size: 0.74rem;
+}
+
+.ui-tooltip span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}

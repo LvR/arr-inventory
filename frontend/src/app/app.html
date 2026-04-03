@@ -1,0 +1,118 @@
+<div class="app-shell">
+  @if (!sessionChecked()) {
+    <main class="auth-shell auth-shell--loading">
+      <section class="auth-card">
+        <strong>Checking session...</strong>
+      </section>
+    </main>
+  } @else if (!isAuthenticated()) {
+    <app-auth-login-card
+      [appName]="appName"
+      [username]="loginUsername()"
+      [password]="loginPassword()"
+      [isLoggingIn]="isLoggingIn()"
+      [authError]="authError()"
+      (usernameChanged)="setLoginUsername($event)"
+      (passwordChanged)="setLoginPassword($event)"
+      (loginSubmitted)="login()"
+    />
+  } @else {
+  <app-dashboard-header
+    [appName]="appName"
+    [summary]="summary()"
+    [authUsername]="authUsername()"
+    [analysisInProgress]="analysisInProgress()"
+    [isPurging]="isPurging()"
+    [isScanning]="isScanning()"
+    (logoutTooltipShown)="showTooltip($event, 'Logout', [])"
+    (startScanTooltipShown)="showTooltip($event, 'Start new analyse', [])"
+    (stopScanTooltipShown)="showTooltip($event, 'Stop analyse', [])"
+    (purgeInventoryTooltipShown)="showTooltip($event, 'Purge inventory', [])"
+    (tooltipMoved)="moveTooltip($event)"
+    (tooltipHidden)="hideTooltip()"
+    (logoutClicked)="logout()"
+    (startScanClicked)="startScan()"
+    (stopScanClicked)="stopScan()"
+    (purgeInventoryClicked)="purgeInventory()"
+  />
+
+  @if (errorMessage()) {
+    <section class="alert-banner">
+      <strong>Sync warning</strong>
+      <span>{{ errorMessage() }}</span>
+    </section>
+  }
+
+  <main class="content-area">
+    <section class="panel panel--table">
+      <app-inventory-filters
+        [checkGlobalFilters]="checkGlobalFilters"
+        [checkRuleFilters]="checkRuleFilters"
+        [locationFilters]="locationFilters"
+        [fileFilters]="fileFilters"
+        [availableTrackers]="availableTrackers()"
+        [filenameQuery]="filenameQuery()"
+        [filteredTotalSizeDisplay]="filteredTotalSizeDisplay()"
+        [activeFilterCount]="activeFilterCount()"
+        [hasActiveFilters]="hasActiveFilters()"
+        [hasCustomSort]="hasCustomSort()"
+        [activeCheckFilter]="checkFilter()"
+        [activeLocationFilter]="locationFilter()"
+        [activeTrackerFilter]="trackerFilter()"
+        [activeFileFilter]="fileFilter()"
+        [checkFilterCounts]="checkFilterCounts()"
+        [locationFilterCounts]="locationFilterCounts()"
+        [trackerFilterCounts]="trackerFilterCounts()"
+        [fileFilterCounts]="fileFilterCounts()"
+        (resetFiltersTooltipShown)="showTooltip($event, 'Reset filters', [])"
+        (resetSortTooltipShown)="showTooltip($event, 'Reset sort', [])"
+        (tooltipMoved)="moveTooltip($event)"
+        (tooltipHidden)="hideTooltip()"
+        (checkFilterSelected)="setCheckFilter($event)"
+        (filenameQueryChanged)="setFilenameQuery($event)"
+        (filenameQueryCleared)="clearFilenameQuery()"
+        (locationFilterSelected)="setLocationFilter($event)"
+        (trackerFilterSelected)="setTrackerFilter($event)"
+        (fileFilterSelected)="setFileFilter($event)"
+        (resetFiltersClicked)="resetFilters()"
+        (resetSortClicked)="resetSort()"
+      />
+
+      <app-inventory-table
+        [tableHeaders]="tableHeaders"
+        [rows]="sortedInventory()"
+        [sortKey]="sortKey()"
+        [sortDirection]="sortDirection()"
+        (sortRequested)="sortBy($event)"
+        (rowSelected)="openGroupDetail($event)"
+        (checkTooltipShown)="showCheckTooltip($event.event, $event.lines)"
+        (trackerTooltipShown)="showTrackerTooltip($event.event, $event.lines)"
+        (tooltipMoved)="moveTooltip($event)"
+        (tooltipHidden)="hideTooltip()"
+      />
+    </section>
+  </main>
+
+  <app-jobs-panel
+    [jobs]="jobs()"
+    [meta]="meta()"
+    [totalJobs]="totalJobs"
+    [completedJobsCount]="completedJobsCount()"
+    [totalDuration]="totalDuration()"
+    (jobHelpShown)="showJobHelpTooltip($event.event, $event.title, $event.lines)"
+    (tooltipMoved)="moveTooltip($event)"
+    (tooltipHidden)="hideTooltip()"
+  />
+
+  @if (selectedGroupDetail()) {
+    <app-group-detail-modal
+      [detail]="selectedGroupDetail()!"
+      (closeRequested)="closeGroupDetail()"
+      (copyPathRequested)="copyPath($event.path, $event.event)"
+    />
+  }
+  }
+  @if (tooltip()) {
+    <app-ui-tooltip [tooltip]="tooltip()!" />
+  }
+</div>

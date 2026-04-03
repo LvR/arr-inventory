@@ -1,0 +1,100 @@
+<div class="table-toolbar">
+  <div class="filters-stack">
+    <div class="filter-panel filter-row">
+      <span class="filter-row__label">Check</span>
+      <div class="filter-group">
+        @for (filter of checkGlobalFilters(); track filter) {
+          <button class="filter-chip" type="button" [class.is-active]="activeCheckFilter() === filter" (click)="checkFilterSelected.emit(filter)">
+            <span>{{ labelForCheck(filter) }}</span>
+            <strong>{{ checkFilterCounts()[filter] }}</strong>
+          </button>
+        }
+        <span class="filter-separator"></span>
+        @for (filter of checkRuleFilters(); track filter) {
+          <button class="filter-chip filter-chip--rule" type="button" [class.is-active]="activeCheckFilter() === filter" (click)="checkFilterSelected.emit(filter)">
+            <span>{{ labelForCheck(filter) }}</span>
+            <strong>{{ checkFilterCounts()[filter] }}</strong>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-panel filter-search">
+      <label class="filter-search__label" for="filename-filter">Files</label>
+      <div class="filter-search__control">
+        <input id="filename-filter" type="text" placeholder="Filter displayed file names" [value]="filenameQuery()" (input)="onFilenameInput($event)" />
+        @if (filenameQuery()) {
+          <button class="filter-search__clear" type="button" (click)="filenameQueryCleared.emit()">Clear</button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-panel filter-row">
+      <span class="filter-row__label">Location</span>
+      <div class="filter-group">
+        @for (filter of locationFilters(); track filter) {
+          <button class="filter-chip" type="button" [class.is-active]="activeLocationFilter() === filter" (click)="locationFilterSelected.emit(filter)">
+            <span>{{ labelForLocation(filter) }}</span>
+            <strong>{{ locationFilterCounts()[filter] }}</strong>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-panel filter-row">
+      <span class="filter-row__label">Tracker</span>
+      <div class="filter-group">
+        <button class="filter-chip" type="button" [class.is-active]="activeTrackerFilter() === 'all'" (click)="trackerFilterSelected.emit('all')">
+          <span>All</span>
+          <strong>{{ trackerFilterCounts()['all'] }}</strong>
+        </button>
+        @for (tracker of availableTrackers(); track tracker) {
+          <button class="filter-chip" type="button" [class.is-active]="activeTrackerFilter() === tracker" (click)="trackerFilterSelected.emit(tracker)">
+            <span>{{ tracker }}</span>
+            <strong>{{ trackerFilterCounts()[tracker] }}</strong>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-panel filter-row">
+      <span class="filter-row__label">Type</span>
+      <div class="filter-group">
+        @for (filter of fileFilters(); track filter) {
+          <button class="filter-chip" type="button" [class.is-active]="activeFileFilter() === filter" (click)="fileFilterSelected.emit(filter)">
+            <span>{{ labelForFile(filter) }}</span>
+            <strong>{{ fileFilterCounts()[filter] }}</strong>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-panel filter-panel--actions">
+      <span class="filter-row__label">Actions</span>
+      <div class="filter-actions">
+        <span class="filter-total-size">{{ filteredTotalSizeDisplay() }}</span>
+        @if (hasActiveFilters()) {
+          <span class="filter-indicator">{{ activeFilterCount() }} active</span>
+        }
+        <div class="filter-action-icons">
+          <button class="icon-button icon-button--ghost" type="button" aria-label="Reset filters" [disabled]="!hasActiveFilters()" (mouseenter)="resetFiltersTooltipShown.emit($event)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()" (click)="resetFiltersClicked.emit()">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16" />
+              <path d="M7 12h10" />
+              <path d="M10 17h4" />
+            </svg>
+          </button>
+          <button class="icon-button icon-button--ghost" type="button" aria-label="Reset sort" [disabled]="!hasCustomSort()" (mouseenter)="resetSortTooltipShown.emit($event)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()" (click)="resetSortClicked.emit()">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 7h8" />
+              <path d="M8 12h6" />
+              <path d="M8 17h4" />
+              <path d="M16 15l2 2 2-2" />
+              <path d="M18 17V7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

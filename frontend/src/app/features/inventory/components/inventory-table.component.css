@@ -1,0 +1,200 @@
+:host {
+  display: block;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.table-wrap {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 1px solid var(--border);
+  background: #131518;
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  background: #131518;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 7px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  position: sticky;
+  top: 0;
+  background: #101214;
+  z-index: 1;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 56px;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 74px;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+  width: 52px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 80px;
+}
+
+th:nth-child(5),
+td:nth-child(5),
+th:nth-child(6),
+td:nth-child(6),
+th:nth-child(7),
+td:nth-child(7),
+th:nth-child(8),
+td:nth-child(8),
+th:nth-child(9),
+td:nth-child(9),
+th:nth-child(10),
+td:nth-child(10) {
+  width: 78px;
+}
+
+th:nth-child(11),
+td:nth-child(11) {
+  width: auto;
+}
+
+th:nth-child(12),
+td:nth-child(12),
+th:nth-child(13),
+td:nth-child(13) {
+  width: 80px;
+}
+
+th.is-sorted {
+  color: var(--accent);
+}
+
+th.is-ascending::after,
+th.is-descending::after {
+  margin-left: 6px;
+  font-size: 0.75rem;
+}
+
+th.is-ascending::after {
+  content: '▲';
+}
+
+th.is-descending::after {
+  content: '▼';
+}
+
+th:focus-visible,
+.cell:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -2px;
+}
+
+tbody tr {
+  background: #141618;
+}
+
+tbody tr:nth-child(even) {
+  background: #16181b;
+}
+
+.cell {
+  position: relative;
+}
+
+.cell strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.cell--compact {
+  white-space: nowrap;
+}
+
+.cell--flag {
+  text-align: center;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.cell--flag strong {
+  font-size: 0.86rem;
+}
+
+.cell--files {
+  width: auto;
+}
+
+.cell--type strong,
+.cell--check strong {
+  overflow: visible;
+}
+
+.cell--check {
+  text-align: center;
+}
+
+.cell--check .check-badge {
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 0 auto;
+}
+
+.table-row {
+  cursor: pointer;
+}
+
+.table-row:hover {
+  background: #1b2025;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 18px 12px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  th,
+  td {
+    padding: 7px 6px;
+  }
+
+  th {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+  }
+
+  .cell strong {
+    font-size: 0.8rem;
+  }
+}

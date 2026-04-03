@@ -1,0 +1,131 @@
+:host {
+  color-scheme: dark;
+  --bg: #151515;
+  --panel: #191b1e;
+  --panel-2: #16181b;
+  --text: #d7d9dd;
+  --muted: #8e949c;
+  --accent: #3c89b8;
+  --accent-2: #6f8898;
+  --border: #2b3138;
+  display: block;
+  height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+.app-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.auth-shell--loading {
+  background: linear-gradient(180deg, #121416 0%, #151515 100%);
+}
+
+.panel,
+.alert-banner {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+.alert-banner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-color: #5f3a3a;
+  font-size: 0.8rem;
+}
+
+.content-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel {
+  padding: 8px;
+}
+
+.panel--table {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel--bottom {
+  padding: 8px;
+  flex: 0 0 auto;
+}
+
+.panel__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.panel__head--bottom {
+  align-items: center;
+}
+
+.panel__head h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.panel__head p {
+  font-size: 0.78rem;
+}
+
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 18px 12px;
+  font-size: 0.8rem;
+}
+
+code {
+  background: #181b1f;
+  padding: 2px 6px;
+}
+
+@media (max-width: 720px) {
+  :host,
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app-shell {
+    padding: 8px;
+    overflow: visible;
+  }
+
+  .panel {
+    padding: 8px;
+  }
+
+  .content-area {
+    overflow: visible;
+  }
+
+  .action-button {
+    width: 100%;
+  }
+}

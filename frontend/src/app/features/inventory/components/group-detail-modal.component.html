@@ -1,0 +1,268 @@
+<div class="modal-backdrop" (click)="closeRequested.emit()">
+  <section class="modal" (click)="$event.stopPropagation()">
+    <div class="modal__head">
+      <div class="modal__title-block">
+        <h2>{{ detail().filenames_display || '—' }}</h2>
+        <p class="modal__meta">Group {{ detail().group_key }} · {{ detail().size_bytes_display }} · {{ detail().hardlink_count }} hardlinks</p>
+      </div>
+      <button class="modal__close" type="button" aria-label="Close details" (click)="closeRequested.emit()">x</button>
+    </div>
+
+    <div class="modal__body">
+      <section class="modal-section">
+        <h3>Consistency check</h3>
+        <article class="detail-card detail-card--check">
+          <div class="detail-card__headline">
+            <strong [class]="consistencyBadgeClass(detail().consistency_status)">
+              {{ consistencyBadgeLabel(detail().consistency_status) }}
+            </strong>
+            <span>
+              @if (detail().consistency_status === 'pending') {
+                Waiting for consistency check
+              } @else {
+                {{ detail().consistency_issue_count }} issue(s)
+              }
+            </span>
+          </div>
+          @for (check of detail().checks; track check.check_key) {
+            @if (check.status !== 'na') {
+              <div [class]="checkResultClass(check.status)">
+                <div class="detail-card__headline">
+                  <strong>{{ check.label }}</strong>
+                  <span [class]="consistencyBadgeClass(check.status)">{{ consistencyBadgeLabel(check.status) }}</span>
+                </div>
+                <span>{{ check.summary }}</span>
+                @if (check.details.length) {
+                  <div class="check-result__details">
+                    @for (detailLine of check.details; track detailLine) {
+                      <span>{{ detailLine }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </article>
+      </section>
+
+      <section class="modal-section">
+        <h3>Files in group</h3>
+        <div class="detail-list">
+          @for (pathGroup of detail().path_groups; track pathGroup.label) {
+            @if (pathGroup.entries.length) {
+              <article class="detail-card">
+                <strong>{{ pathGroup.label }}</strong>
+                @for (path of pathGroup.entries; track path) {
+                  <span class="path-line">
+                    <span>{{ path }}</span>
+                    <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(path, $event)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                    </button>
+                  </span>
+                }
+              </article>
+            }
+          }
+        </div>
+      </section>
+
+      <section class="modal-section">
+        <h3>Radarr</h3>
+        @if (detail().radarr.imported.length || detail().radarr.queue.length) {
+          <div class="detail-list">
+            @if (detail().radarr.imported.length) {
+              <article class="detail-card">
+                <strong>Imported movies</strong>
+                @for (item of detail().radarr.imported; track item.file_path) {
+                  <div class="radarr-row">
+                    <div class="detail-card__headline">
+                      <strong>{{ item.title }}{{ item.year ? ' (' + item.year + ')' : '' }}</strong>
+                      <span class="state-badge state-badge--done">Imported</span>
+                    </div>
+                    <span>Status: {{ item.status || '—' }}</span>
+                    <span class="path-line">
+                      <span>Movie path: {{ item.movie_path || '—' }}</span>
+                      @if (item.movie_path) {
+                        <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.movie_path, $event)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                        </button>
+                      }
+                    </span>
+                    <span class="path-line">
+                      <span>File path: {{ item.file_path }}</span>
+                      <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.file_path, $event)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                      </button>
+                    </span>
+                  </div>
+                }
+              </article>
+            }
+            @if (detail().radarr.queue.length) {
+              <article class="detail-card">
+                <strong>Queue</strong>
+                @for (item of detail().radarr.queue; track item.queue_id ? item.queue_id : item.file_path) {
+                  <div class="radarr-row">
+                    <div class="detail-card__headline">
+                      <strong>{{ item.title }}{{ item.year ? ' (' + item.year + ')' : '' }}</strong>
+                      <span class="state-badge state-badge--running">Queue</span>
+                    </div>
+                    <span>Status: {{ item.status || '—' }}</span>
+                    <span>Tracked: {{ item.tracked_download_status || '—' }} · {{ item.tracked_download_state || '—' }}</span>
+                    <span class="path-line">
+                      <span>Movie path: {{ item.movie_path || '—' }}</span>
+                      @if (item.movie_path) {
+                        <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.movie_path, $event)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                        </button>
+                      }
+                    </span>
+                    <span class="path-line">
+                      <span>File path: {{ item.file_path }}</span>
+                      <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.file_path, $event)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                      </button>
+                    </span>
+                    @if (item.status_messages?.length) {
+                      <div class="check-result__details">
+                        @for (message of item.status_messages!; track message) {
+                          <span>{{ message }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="empty">No Radarr matches for this group.</p>
+        }
+      </section>
+
+      <section class="modal-section">
+        <h3>Sonarr</h3>
+        @if (detail().sonarr.imported.length || detail().sonarr.queue.length) {
+          <div class="detail-list">
+            @if (detail().sonarr.imported.length) {
+              <article class="detail-card">
+                <strong>Imported episodes</strong>
+                @for (item of detail().sonarr.imported; track item.file_path) {
+                  <div class="radarr-row">
+                    <div class="detail-card__headline">
+                      <strong>{{ item.series_title }}</strong>
+                      <span class="state-badge state-badge--done">Imported</span>
+                    </div>
+                    <span>Episode: S{{ item.season_number || 0 }} · {{ item.episode_numbers?.length ? item.episode_numbers!.join(', ') : '—' }}</span>
+                    <span>Status: {{ item.status || '—' }}</span>
+                    <span class="path-line">
+                      <span>Series path: {{ item.series_path || '—' }}</span>
+                      @if (item.series_path) {
+                        <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.series_path, $event)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                        </button>
+                      }
+                    </span>
+                    <span class="path-line">
+                      <span>File path: {{ item.file_path }}</span>
+                      <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.file_path, $event)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                      </button>
+                    </span>
+                  </div>
+                }
+              </article>
+            }
+            @if (detail().sonarr.queue.length) {
+              <article class="detail-card">
+                <strong>Queue</strong>
+                @for (item of detail().sonarr.queue; track item.queue_id ? item.queue_id : item.file_path) {
+                  <div class="radarr-row">
+                    <div class="detail-card__headline">
+                      <strong>{{ item.series_title }}</strong>
+                      <span class="state-badge state-badge--running">Queue</span>
+                    </div>
+                    <span>Episode: S{{ item.season_number || 0 }} · {{ item.episode_numbers?.length ? item.episode_numbers!.join(', ') : '—' }}</span>
+                    <span>Status: {{ item.status || '—' }}</span>
+                    <span>Tracked: {{ item.tracked_download_status || '—' }} · {{ item.tracked_download_state || '—' }}</span>
+                    <span class="path-line">
+                      <span>Series path: {{ item.series_path || '—' }}</span>
+                      @if (item.series_path) {
+                        <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.series_path, $event)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                        </button>
+                      }
+                    </span>
+                    <span class="path-line">
+                      <span>File path: {{ item.file_path }}</span>
+                      <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(item.file_path, $event)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                      </button>
+                    </span>
+                    @if (item.status_messages?.length) {
+                      <div class="check-result__details">
+                        @for (message of item.status_messages!; track message) {
+                          <span>{{ message }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="empty">No Sonarr matches for this group.</p>
+        }
+      </section>
+
+      <section class="modal-section">
+        <h3>Torrents</h3>
+        @if (detail().torrents.length) {
+          <div class="detail-list">
+            @for (torrent of detail().torrents; track torrent.hash) {
+              <article class="detail-card detail-card--torrent">
+                <div class="detail-card__headline detail-card__headline--torrent">
+                  <strong>{{ torrent.name }}</strong>
+                  <span [class]="torrentStatusClass(torrent.status)">{{ torrentStatusLabel(torrent.status) }}</span>
+                </div>
+                <span>Trackers: {{ trackerNamesLine(torrent.tracker_names) }}</span>
+                <span>Category: {{ torrent.category || '—' }} · Tags: {{ torrent.tags || '—' }}</span>
+                <span>
+                  Downloaded: {{ humanBytes(torrent.total_downloaded) }} · Uploaded: {{ humanBytes(torrent.total_uploaded) }} · Ratio: {{ torrent.ratio.toFixed(2) }} · Seed time: {{ humanSeconds(torrent.seed_time) }}
+                </span>
+                <div class="torrent-subsection">
+                  <h4>Trackers</h4>
+                  @for (tracker of torrent.trackers; track tracker.url) {
+                    <div class="tracker-row">
+                      <span class="tracker-row__line">
+                        <span>{{ tracker.url }}</span>
+                        <span [class]="trackerStatusClass(tracker.status)">{{ trackerStatusLabel(tracker.status) }}</span>
+                        <span>{{ tracker.message || '—' }}</span>
+                      </span>
+                    </div>
+                  }
+                </div>
+                <div class="torrent-subsection">
+                  <h4>Files</h4>
+                  @for (file of torrent.files; track file.file_path) {
+                    <div class="tracker-row">
+                      <span class="path-line">
+                        <span class="torrent-file-path" [class.is-match]="file.is_matched">{{ file.file_path }}</span>
+                        <button class="copy-btn" type="button" aria-label="Copy path" (click)="requestCopy(file.file_path, $event)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></svg>
+                        </button>
+                      </span>
+                    </div>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="empty">No torrents matched this group.</p>
+        }
+      </section>
+    </div>
+  </section>
+</div>

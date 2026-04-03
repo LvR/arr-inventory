@@ -1,0 +1,73 @@
+<header class="hero">
+  <div class="hero__summary">
+    <div class="hero__title-block">
+      <h1>{{ appName() }}</h1>
+    </div>
+
+    <div class="hero-stats">
+      <section class="hero-stat-group">
+        <p class="hero-stat-group__title">Files</p>
+        <div class="hero-stat-group__items">
+          <span><strong>{{ summary().files }}</strong> files</span>
+          <span><strong>{{ summary().groups }}</strong> groups</span>
+          <span><strong>{{ summary().downloads }}</strong> downloads</span>
+          <span><strong>{{ summary().movies }}</strong> movies</span>
+          <span><strong>{{ summary().tv }}</strong> tv</span>
+          <span><strong>{{ summary().music }}</strong> music</span>
+        </div>
+      </section>
+
+      <section class="hero-stat-group">
+        <p class="hero-stat-group__title">Torrents</p>
+        <div class="hero-stat-group__items">
+          <span><strong>{{ summary().torrents }}</strong> torrents</span>
+        </div>
+      </section>
+
+      <section class="hero-stat-group">
+        <p class="hero-stat-group__title">Checks</p>
+        <div class="hero-stat-group__items">
+          <span><strong>{{ summary().checks_ok }}</strong> ok</span>
+          <span><strong>{{ summary().checks_ko }}</strong> ko</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="hero__actions">
+    <div class="hero__session">
+      <span>Logged as <strong>{{ authUsername() }}</strong></span>
+      <button class="icon-button icon-button--ghost" type="button" aria-label="Logout" (mouseenter)="logoutTooltipShown.emit($event)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()" (click)="logoutClicked.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 4H5v16h5" />
+          <path d="M13 8l4 4-4 4" />
+          <path d="M8 12h9" />
+        </svg>
+      </button>
+    </div>
+    <div class="hero__action-row">
+      @if (analysisInProgress()) {
+        <button class="icon-button icon-button--stop" type="button" aria-label="Stop analyse" (mouseenter)="stopScanTooltipShown.emit($event)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()" (click)="stopScanClicked.emit()">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="7" y="7" width="10" height="10" />
+          </svg>
+        </button>
+      } @else {
+        <button class="icon-button icon-button--start" type="button" aria-label="Start new analyse" [class.is-loading]="isPurging()" [disabled]="isPurging()" (mouseenter)="startScanTooltipShown.emit($event)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()" (click)="startScanClicked.emit()">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 6l9 6-9 6z" />
+          </svg>
+        </button>
+      }
+      <button class="icon-button icon-button--purge" type="button" aria-label="Purge inventory" [class.is-loading]="isPurging()" [disabled]="isScanning() || isPurging()" (mouseenter)="purgeInventoryTooltipShown.emit($event)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()" (click)="purgeInventoryClicked.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 7h14" />
+          <path d="M9 7V5h6v2" />
+          <path d="M8 7l1 11h6l1-11" />
+          <path d="M10 10v5" />
+          <path d="M14 10v5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>

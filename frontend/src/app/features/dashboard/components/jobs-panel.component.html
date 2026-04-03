@@ -1,0 +1,34 @@
+<footer class="footer-grid">
+  <section class="panel panel--bottom">
+    <div class="panel__head panel__head--bottom">
+      <h2>Analyse state</h2>
+      <p>
+        Last inventory: <strong>{{ meta().last_inventory_at_display || 'never' }}</strong>
+        · Jobs: <strong>{{ completedJobsCount() }}/{{ totalJobs() }}</strong>
+        · Duration: <strong>{{ totalDuration() }}</strong>
+      </p>
+    </div>
+
+    <div class="jobs-stack">
+      @for (job of jobs(); track job.job_key) {
+        <div class="job-card">
+          <div class="job-card__topline">
+            <strong>{{ job.label }}</strong>
+            <span class="state-badge" [class]="'state-badge state-badge--' + (job.state || 'idle')">{{ statusLabel(job.state) }} · {{ job.progress }}%</span>
+          </div>
+          <span class="job-card__duration">{{ jobDuration(job) }}</span>
+          <p>{{ job.message || 'Idle' }}</p>
+          <button class="icon-button icon-button--ghost job-card__help" type="button" aria-label="Job help" (mouseenter)="onJobHelpEnter($event, job)" (mousemove)="tooltipMoved.emit($event)" (mouseleave)="tooltipHidden.emit()">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="8" />
+              <path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.9.5-1.1.9-1.1 1.8" />
+              <path d="M12 16h.01" />
+            </svg>
+          </button>
+        </div>
+      } @empty {
+        <div class="job-card empty">No jobs yet.</div>
+      }
+    </div>
+  </section>
+</footer>

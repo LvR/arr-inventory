@@ -1,0 +1,29 @@
+<main class="auth-shell">
+  <section class="auth-card">
+    <div class="auth-card__head">
+      <p class="auth-card__eyebrow">Admin access</p>
+      <h1>{{ appName() }}</h1>
+      <p>Sign in with the administrator account configured in the environment.</p>
+    </div>
+
+    <div class="auth-form">
+      <label class="auth-field">
+        <span>Username</span>
+        <input type="text" [value]="username()" autocomplete="username" (input)="onUsernameInput($event)" />
+      </label>
+
+      <label class="auth-field">
+        <span>Password</span>
+        <input type="password" [value]="password()" autocomplete="current-password" (input)="onPasswordInput($event)" (keydown.enter)="loginSubmitted.emit()" />
+      </label>
+
+      @if (authError()) {
+        <p class="auth-error">{{ authError() }}</p>
+      }
+
+      <button class="action-button auth-submit" type="button" [class.is-loading]="isLoggingIn()" [disabled]="isLoggingIn()" (click)="loginSubmitted.emit()">
+        <span>{{ isLoggingIn() ? 'Signing in...' : 'Sign in' }}</span>
+      </button>
+    </div>
+  </section>
+</main>

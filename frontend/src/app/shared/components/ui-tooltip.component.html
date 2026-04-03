@@ -1,0 +1,6 @@
+<div class="ui-tooltip" [style.left.px]="tooltip().x" [style.top.px]="tooltip().y">
+  <strong>{{ tooltip().title }}</strong>
+  @for (line of tooltip().lines; track line) {
+    <span>{{ line }}</span>
+  }
+</div>
