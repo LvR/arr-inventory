@@ -6,7 +6,6 @@ services:
     environment:
       DATA_ROOT: ${DOCKER_DATA_ROOT:-/data}
       DATABASE_PATH: /var/lib/arr-inventory/app.db
-      APP_VERSION: ${APP_VERSION:-}
       DOWNLOADS_PATH: ${DOWNLOADS_PATH:-${DOCKER_DATA_ROOT:-/data}/downloads}
       MOVIES_PATH: ${MOVIES_PATH:-${DOCKER_DATA_ROOT:-/data}/media/movies}
       TV_PATH: ${TV_PATH:-${DOCKER_DATA_ROOT:-/data}/media/tv}
