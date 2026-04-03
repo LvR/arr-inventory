@@ -1,7 +1,8 @@
 services:
   arr-inventory:
     container_name: arr-inventory
-    image: ghcr.io/lvr/arr-inventory:latest
+    build: .
+    env_file: .env
     environment:
       DATA_ROOT: ${DOCKER_DATA_ROOT:-/data}
       DATABASE_PATH: /var/lib/arr-inventory/app.db

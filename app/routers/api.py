@@ -53,13 +53,13 @@ def login(payload: LoginPayload, request: Request, response: Response, settings:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     clear_login_throttle(request)
     set_authenticated_cookie(response, settings)
-    return {"authenticated": True, "username": settings.admin_username}
+    return {"authenticated": True, "username": settings.admin_username, "app_version": settings.app_version}
 
 
 @router.post("/auth/logout")
-def logout(response: Response) -> dict[str, bool]:
+def logout(response: Response, settings: Settings = Depends(get_settings)) -> dict[str, str | bool]:
     clear_authenticated_cookie(response)
-    return {"authenticated": False}
+    return {"authenticated": False, "app_version": settings.app_version}
 
 
 @router.get("/summary")
@@ -142,6 +142,11 @@ def scan_filesystem(_: str = Depends(require_authenticated_admin), settings: Set
             settings.torrent_min_seed_time_days,
             settings.torrent_min_ratio,
         ),
+        kwargs={
+            "downloads_path": settings.downloads_path,
+            "movies_path": settings.movies_path,
+            "tv_path": settings.tv_path,
+        },
         daemon=True,
     )
     thread.start()

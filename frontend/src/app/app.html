@@ -1,4 +1,4 @@
-<div class="app-shell">
+<div class="app-shell" [class.app-shell--auth]="sessionChecked() && !isAuthenticated()">
   @if (!sessionChecked()) {
     <main class="auth-shell auth-shell--loading">
       <section class="auth-card">
@@ -8,6 +8,7 @@
   } @else if (!isAuthenticated()) {
     <app-auth-login-card
       [appName]="appName"
+      [buildLabel]="loginBuildLabel()"
       [username]="loginUsername()"
       [password]="loginPassword()"
       [isLoggingIn]="isLoggingIn()"

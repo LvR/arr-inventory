@@ -9,6 +9,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 })
 export class AuthLoginCardComponent {
   readonly appName = input.required<string>();
+  readonly buildLabel = input.required<string>();
   readonly username = input.required<string>();
   readonly password = input.required<string>();
   readonly isLoggingIn = input.required<boolean>();

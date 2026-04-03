@@ -7,7 +7,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "ARR Inventory"
+    app_version: str = ""
     data_root: str = "/data"
+    downloads_path: str = "/data/downloads"
+    movies_path: str = "/data/media/movies"
+    tv_path: str = "/data/media/tv"
     database_path: str = "./app.db"
     frontend_dist_path: str = "./frontend/dist/frontend/browser"
     admin_username: str = "admin"

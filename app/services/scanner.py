@@ -39,6 +39,14 @@ class FileRecord:
         return f"{self.device}:{self.inode}"
 
 
+@dataclass(slots=True)
+class ScanRoots:
+    downloads: Path
+    movies: Path
+    tv: Path
+    music: Path
+
+
 def _iter_files(root: Path) -> Iterable[Path]:
     for current_root, _, filenames in os.walk(root):
         base = Path(current_root)
@@ -46,39 +54,52 @@ def _iter_files(root: Path) -> Iterable[Path]:
             yield base / filename
 
 
-def _bucket_for_path(path: Path, data_root: Path) -> str | None:
-    try:
-        relative = path.relative_to(data_root)
-    except ValueError:
-        return None
+def _resolve_scan_root(data_root: Path, configured_path: str) -> Path:
+    candidate = Path(configured_path)
+    if candidate.is_absolute():
+        return candidate
+    return data_root / candidate
 
-    parts = relative.parts
-    if len(parts) < 2:
-        return None
 
-    if parts[0] != "downloads" and parts[0] != "media":
-        return None
+def _build_scan_roots(data_root: Path, downloads_path: str, movies_path: str, tv_path: str) -> ScanRoots:
+    return ScanRoots(
+        downloads=_resolve_scan_root(data_root, downloads_path),
+        movies=_resolve_scan_root(data_root, movies_path),
+        tv=_resolve_scan_root(data_root, tv_path),
+        music=data_root / "media" / "music",
+    )
 
-    if parts[0] == "downloads":
-        return ROOT_BUCKETS["downloads"]
 
-    if parts[0] == "media" and len(parts) > 1:
-        if parts[1] == "movies":
-            return ROOT_BUCKETS["movies"]
-        if parts[1] == "tv":
-            return ROOT_BUCKETS["tv"]
-        if parts[1] == "music":
-            return ROOT_BUCKETS["music"]
-
+def _bucket_for_path(path: Path, scan_roots: ScanRoots) -> str | None:
+    for bucket, root in (
+        (ROOT_BUCKETS["downloads"], scan_roots.downloads),
+        (ROOT_BUCKETS["movies"], scan_roots.movies),
+        (ROOT_BUCKETS["tv"], scan_roots.tv),
+        (ROOT_BUCKETS["music"], scan_roots.music),
+    ):
+        try:
+            path.relative_to(root)
+            return bucket
+        except ValueError:
+            continue
     return None
 
 
 def scan_filesystem(
     data_root: str,
+    downloads_path: str | None = None,
+    movies_path: str | None = None,
+    tv_path: str | None = None,
     progress: Callable[[int, int, str], None] | None = None,
     should_stop: Callable[[], bool] | None = None,
 ) -> list[FileRecord]:
     root = Path(data_root)
+    scan_roots = _build_scan_roots(
+        root,
+        downloads_path or str(root / "downloads"),
+        movies_path or str(root / "media" / "movies"),
+        tv_path or str(root / "media" / "tv"),
+    )
     candidates = [path for path in _iter_files(root) if path.is_file()]
     total = len(candidates)
     records: list[FileRecord] = []
@@ -86,7 +107,7 @@ def scan_filesystem(
     for index, file_path in enumerate(candidates, start=1):
         if should_stop is not None and should_stop():
             break
-        bucket = _bucket_for_path(file_path, root)
+        bucket = _bucket_for_path(file_path, scan_roots)
         if bucket is None:
             if progress is not None:
                 progress(index, total, str(file_path))
@@ -154,7 +175,14 @@ def persist_inventory(connection, records: list[FileRecord]) -> None:
     set_inventory_meta(connection, "last_inventory_at", datetime.now(tz=timezone.utc).isoformat())
 
 
-def run_filesystem_scan(database_path: str, data_root: str) -> dict[str, int]:
+def run_filesystem_scan(
+    database_path: str,
+    data_root: str,
+    *,
+    downloads_path: str | None = None,
+    movies_path: str | None = None,
+    tv_path: str | None = None,
+) -> dict[str, int]:
     now = datetime.now(tz=timezone.utc).isoformat()
     with get_connection(database_path) as connection:
         ensure_job_state(
@@ -188,7 +216,14 @@ def run_filesystem_scan(database_path: str, data_root: str) -> dict[str, int]:
             )
 
         stop_event = _get_stop_event(database_path)
-        records = scan_filesystem(data_root, progress=report_progress, should_stop=stop_event.is_set)
+        records = scan_filesystem(
+            data_root,
+            downloads_path=downloads_path,
+            movies_path=movies_path,
+            tv_path=tv_path,
+            progress=report_progress,
+            should_stop=stop_event.is_set,
+        )
         persist_inventory(connection, records)
 
         if stop_event.is_set():
@@ -233,6 +268,10 @@ def run_inventory_pipeline(
     sonarr_api_key: str,
     torrent_min_seed_time_days: float,
     torrent_min_ratio: float,
+    *,
+    downloads_path: str | None = None,
+    movies_path: str | None = None,
+    tv_path: str | None = None,
 ) -> dict[str, int]:
     stop_event = _get_stop_event(database_path)
     stop_event.clear()
@@ -272,7 +311,13 @@ def run_inventory_pipeline(
                 message="Waiting for qBittorrent sync",
             )
 
-        fs_result = run_filesystem_scan(database_path, data_root)
+        fs_result = run_filesystem_scan(
+            database_path,
+            data_root,
+            downloads_path=downloads_path,
+            movies_path=movies_path,
+            tv_path=tv_path,
+        )
 
         with get_connection(database_path) as connection:
             if stop_event.is_set():

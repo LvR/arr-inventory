@@ -24,6 +24,11 @@
   overflow: hidden;
 }
 
+.app-shell--auth {
+  padding: 0;
+  gap: 0;
+}
+
 .auth-shell--loading {
   background: linear-gradient(180deg, #121416 0%, #151515 100%);
 }

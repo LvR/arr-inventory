@@ -1,110 +1,93 @@
 # ARR inventory
 
+> Disclaimer: this project was vibe coded. Treat it as a useful tool built pragmatically, and review the code and behavior before relying on it in a critical environment.
+
 Read-only web app to inventory torrents and media files across an ARR stack.
 
-## Scope v1
+## Context
 
-- filesystem inventory only, no delete/rename/move actions
-- hardlink-aware grouping across `/data/downloads`, `/data/media/movies`, `/data/media/tv`, `/data/media/music`
-- read-only enrichment from qBittorrent, Radarr, Sonarr, and TMDB
-- dashboard with summary counters, background job state, and a grouped table
-- qBittorrent sync now runs as a second background job after filesystem scan and enriches groups with torrent metadata
-- a third background job runs consistency checks after torrent sync and stores an OK/KO status per group
+This project scans a hardlink-based media layout and exposes a web UI to inspect what is present across:
 
-## Stack
+- downloads files
+- movies files
+- TV files
+- qBittorrent torrents
+- Radarr entries
+- Sonarr entries
 
-- Backend: Python + FastAPI
-- Storage: SQLite
-- UI: Angular SPA served by FastAPI
-- Runtime: Docker Compose (single app service)
+The application is intentionally read-only. It helps identify mismatches and suspicious states without deleting, moving, or renaming files.
 
-## Quick start
+## Rules
 
-1. Copy `.env.example` to `.env`, set `ADMIN_USERNAME` and `ADMIN_PASSWORD`, then adjust the API settings.
-2. Start the stack with `docker compose up --build`.
-3. Open `http://localhost:8000`.
+Each analysis run executes these jobs in order:
 
-## Project layout
+1. Filesystem scan
+2. qBittorrent sync
+3. Radarr sync
+4. Sonarr sync
+5. Consistency check
 
-- `app/`: application code
-- `tests/`: basic app checks
-- `docker-compose.yml`: local runtime
-- `Dockerfile`: container image
-- `.env.example`: configuration template
+The consistency step stores rule results per hardlink group. Current rules are:
 
-## Environment variables
+- `Downloads in torrents`: every file under `/data/downloads` for a group must match a qBittorrent file.
+- `Movies single video directory`: inside `/data/media/movies`, one group cannot contain multiple video files in the same movie directory.
+- `Movies match Radarr`: movie files must match imported Radarr entries, and imported Radarr entries for the group must point to movie files.
+- `TV match Sonarr`: TV files must match imported Sonarr entries, and imported Sonarr entries for the group must point to TV files.
+- `Download torrent still useful`: if a group only exists in downloads and all matched torrents exceed the configured seed time and ratio thresholds, the group is marked as not useful anymore.
+- `Trackers healthy`: if any active tracker attached to a matched torrent reports an error state or message, the group is marked as failed.
 
-- `HOST_DATA_ROOT`: host path mounted read-only into the container at `/data`
-- `DATA_ROOT`: container-internal scan root, keep this at `/data`
-- `DATABASE_PATH`: SQLite file path inside the container
-- `ADMIN_USERNAME`, `ADMIN_PASSWORD`: administrator login used by the web UI
-- `QBITTORRENT_URL`, `QBITTORRENT_USERNAME`, `QBITTORRENT_PASSWORD`
-- `TORRENT_MIN_SEED_TIME_DAYS`, `TORRENT_MIN_RATIO`: thresholds used by the download usefulness consistency rule
-- `RADARR_URL`, `RADARR_API_KEY`
-- `SONARR_URL`, `SONARR_API_KEY`
-- `TMDB_API_KEY`
+Group status is shown as:
 
-## Commands
+- `Pending`: checks have not run yet for that group
+- `OK`: all applicable rules passed
+- `KO`: at least one applicable rule failed
 
-- Install: `pip install -r requirements-dev.txt`
-- Install frontend: `cd frontend && npm install`
-- Run app: `uvicorn app.main:app --reload`
-- Run frontend dev server: `cd frontend && npm start`
-- Build frontend: `cd frontend && npm run build`
-- Test: `pytest`
-- Frontend test: `cd frontend && npm test`
-- Lint: `ruff check .`
+## Quick Start
 
-## Frontend development
+1. Copy `.env.example` to `.env`.
+2. Set at least `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `HOST_DATA_ROOT`.
+3. Start the app with `docker compose up -d`.
+4. Open `http://localhost:8000`.
 
-- `npm start` proxies `/api` to `http://localhost:8000` for local Angular development.
-- Production assets are built into `frontend/dist/frontend/browser` and served by FastAPI.
-- Live refresh is now handled in Angular with polling against `/api/dashboard`, plus immediate refresh after scan and purge actions.
+Expected media layout inside the mounted data root:
 
-## Consistency checks
+```text
+/data/downloads
+/data/media/movies
+/data/media/tv
+```
 
-Each analysis run now executes five jobs in order:
+This layout matters for hardlink-aware grouping.
 
-1. `Filesystem scan`
-2. `qBittorrent sync`
-3. `Radarr sync`
-4. `Sonarr sync`
-5. `Consistency check`
+If needed, you can override these defaults with `DOWNLOADS_PATH`, `MOVIES_PATH`, and `TV_PATH`.
 
-The consistency step evaluates every hardlink group and stores an extensible list of check results. Each check produces:
+## Environment Variables
 
-- a stable `check_key`
-- a human label
-- a status: `pending`, `ok`, `ko`, or `na`
-- a short summary
-- optional detail lines shown in the group detail modal
+Required or commonly used variables from `.env`:
 
-The dashboard exposes the aggregated group status as a new `Check` column:
+- `HOST_DATA_ROOT`: host path mounted read-only into the container
+- `DOCKER_DATA_ROOT`: path used inside the container, usually `/data`
+- `DOWNLOADS_PATH`: downloads path inside the container, default `/data/downloads`
+- `MOVIES_PATH`: movies path inside the container, default `/data/media/movies`
+- `TV_PATH`: TV path inside the container, default `/data/media/tv`
+- `ADMIN_USERNAME`: login for the web UI
+- `ADMIN_PASSWORD`: password for the web UI
+- `QBITTORRENT_URL`: qBittorrent Web API base URL
+- `QBITTORRENT_USERNAME`: qBittorrent username
+- `QBITTORRENT_PASSWORD`: qBittorrent password
+- `TORRENT_MIN_SEED_TIME_DAYS`: seed time threshold used by the usefulness rule
+- `TORRENT_MIN_RATIO`: ratio threshold used by the usefulness rule
+- `RADARR_URL`: Radarr base URL
+- `RADARR_API_KEY`: Radarr API key
+- `SONARR_URL`: Sonarr base URL
+- `SONARR_API_KEY`: Sonarr API key
 
-- `Pending`: the global consistency pass has not run yet for that group
-- `OK`: all checks passed for the group
-- `KO`: at least one check failed for the group
+Notes:
 
-Rule-level statuses work like this:
+- The container stores its SQLite database in a dedicated Docker volume.
+- The mounted media path is read-only.
+- qBittorrent, Radarr, and Sonarr integration can be left empty, but related rules and enrichments will then be limited.
 
-- `pending`: reserved for checks that have not been evaluated yet
-- `ok`: the rule applied and passed
-- `ko`: the rule applied and failed
-- `na`: the rule does not apply to this group; the UI renders it greyed out
+## More Docs
 
-Current implemented rules:
-
-- `Downloads in torrents`: every file located under `/data/downloads` for a group must be matched to a qBittorrent file
-- `Movies single video directory`: within `/data/media/movies`, a single group cannot contain more than one video file in the same subdirectory; one movie directory should map to one video file for that group
-- `Movies match Radarr`: video files in `/data/media/movies` must be mirrored by imported Radarr entries, and imported Radarr entries for the group must point to movie files
-- `TV match Sonarr`: video files in `/data/media/tv` must be mirrored by imported Sonarr entries, and imported Sonarr entries for the group must point to TV files
-- `Download torrent still useful`: if a group only exists in downloads/torrents and all its matched torrents exceed both configured seed time and ratio thresholds, the group is marked `KO`
-- `Trackers healthy`: if any active tracker attached to a matched torrent reports an error state or error message, the group is marked `KO`
-
-This check system is intentionally data-driven so more rules can be added later without changing the overall dashboard flow.
-
-## Notes
-
-- The web UI now requires administrator login before any dashboard data is exposed.
-- The first version is strictly read-only.
-- Cleanup actions will be added later only if explicitly enabled.
+Technical documentation for architecture, local development, build, test, and frontend workflow is available in `docs/DEVELOPMENT.md`.

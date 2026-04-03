@@ -46,6 +46,7 @@ def test_dashboard_renders(tmp_path):
 def test_dashboard_api_payload(tmp_path):
     settings = Settings(
         database_path=str(tmp_path / "test.db"),
+        app_version="v1.2.3",
         frontend_dist_path=str(_frontend_fixture_dir(tmp_path)),
         admin_username="admin",
         admin_password="secret",
@@ -280,6 +281,50 @@ def test_consistency_checks_stay_pending_before_run(tmp_path):
     detail_payload = client.get(f"/api/groups/{row['id']}").json()
     assert detail_payload["consistency_status"] == "pending"
     assert detail_payload["checks"] == []
+
+
+def test_scan_uses_custom_media_paths(tmp_path):
+    data_root = tmp_path / "data"
+    downloads = data_root / "incoming"
+    movies = data_root / "library" / "films" / "Movie Alpha"
+    tv_dir = data_root / "library" / "shows" / "Show Alpha" / "Season 01"
+    downloads.mkdir(parents=True)
+    movies.mkdir(parents=True)
+    tv_dir.mkdir(parents=True)
+
+    source = downloads / "movie.mkv"
+    source.write_text("demo", encoding="utf-8")
+    (movies / "movie.mkv").hardlink_to(source)
+    (tv_dir / "episode.mkv").write_text("demo", encoding="utf-8")
+
+    settings = Settings(
+        database_path=str(tmp_path / "test.db"),
+        data_root=str(data_root),
+        downloads_path=str(data_root / "incoming"),
+        movies_path=str(data_root / "library" / "films"),
+        tv_path=str(data_root / "library" / "shows"),
+        frontend_dist_path=str(_frontend_fixture_dir(tmp_path)),
+        admin_username="admin",
+        admin_password="secret",
+    )
+    app = create_app(settings)
+    client = TestClient(app)
+    assert client.post("/api/auth/login", json={"username": "admin", "password": "secret"}).status_code == 200
+
+    from app.services.scanner import run_filesystem_scan
+
+    run_filesystem_scan(
+        settings.database_path,
+        settings.data_root,
+        downloads_path=settings.downloads_path,
+        movies_path=settings.movies_path,
+        tv_path=settings.tv_path,
+    )
+
+    payload = client.get("/api/dashboard").json()
+    assert payload["summary"]["downloads"] == 1
+    assert payload["summary"]["movies"] == 1
+    assert payload["summary"]["tv"] == 1
 
 
 def test_radarr_queue_match_sets_group_flag_and_detail(tmp_path, monkeypatch):
@@ -670,6 +715,7 @@ def test_dashboard_requires_login(tmp_path):
     reset_login_throttle_state()
     settings = Settings(
         database_path=str(tmp_path / "test.db"),
+        app_version="v1.2.3",
         frontend_dist_path=str(_frontend_fixture_dir(tmp_path)),
         admin_username="admin",
         admin_password="secret",
@@ -688,6 +734,7 @@ def test_login_and_logout_flow(tmp_path):
     reset_login_throttle_state()
     settings = Settings(
         database_path=str(tmp_path / "test.db"),
+        app_version="v1.2.3",
         frontend_dist_path=str(_frontend_fixture_dir(tmp_path)),
         admin_username="admin",
         admin_password="secret",
@@ -697,26 +744,26 @@ def test_login_and_logout_flow(tmp_path):
 
     session_before = client.get("/api/auth/session")
     assert session_before.status_code == 200
-    assert session_before.json() == {"authenticated": False}
+    assert session_before.json() == {"authenticated": False, "app_version": "v1.2.3"}
 
     denied = client.post("/api/auth/login", json={"username": "admin", "password": "wrong"})
     assert denied.status_code == 401
 
     login = client.post("/api/auth/login", json={"username": "admin", "password": "secret"})
     assert login.status_code == 200
-    assert login.json() == {"authenticated": True, "username": "admin"}
+    assert login.json() == {"authenticated": True, "username": "admin", "app_version": "v1.2.3"}
 
     session_after = client.get("/api/auth/session")
     assert session_after.status_code == 200
-    assert session_after.json() == {"authenticated": True, "username": "admin"}
+    assert session_after.json() == {"authenticated": True, "username": "admin", "app_version": "v1.2.3"}
 
     logout = client.post("/api/auth/logout")
     assert logout.status_code == 200
-    assert logout.json() == {"authenticated": False}
+    assert logout.json() == {"authenticated": False, "app_version": "v1.2.3"}
 
     session_final = client.get("/api/auth/session")
     assert session_final.status_code == 200
-    assert session_final.json() == {"authenticated": False}
+    assert session_final.json() == {"authenticated": False, "app_version": "v1.2.3"}
 
 
 def test_login_throttle_escalates_after_three_attempts(tmp_path, monkeypatch):

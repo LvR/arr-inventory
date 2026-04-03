@@ -94,9 +94,14 @@ def require_authenticated_admin(request: Request, settings: Settings = Depends(g
 def build_session_response(request: Request, settings: Settings) -> dict[str, str | bool]:
     token = request.cookies.get(SESSION_COOKIE_NAME, "")
     username = verify_session_token(token, settings)
+    response: dict[str, str | bool] = {
+        "authenticated": username is not None,
+        "app_version": settings.app_version,
+    }
     if username is None:
-        return {"authenticated": False}
-    return {"authenticated": True, "username": username}
+        return response
+    response["username"] = username
+    return response
 
 
 def set_authenticated_cookie(response: Response, settings: Settings) -> None:

@@ -40,6 +40,7 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly appName = 'ARR Inventory';
+  protected readonly appVersion = signal('');
   protected readonly dataRoot = signal('/data');
   protected readonly sessionChecked = signal(false);
   protected readonly isAuthenticated = signal(false);
@@ -89,6 +90,10 @@ export class App {
   protected readonly fileFilters = this.inventoryState.fileFilters;
   private cancelScanLaunchRequested = false;
   protected readonly sortedInventory = this.inventoryState.sortedInventory;
+  protected readonly loginBuildLabel = computed(() => {
+    const version = this.appVersion().trim();
+    return version ? `Release ${version}` : 'Development build';
+  });
 
   protected readonly filteredTotalSizeBytes = this.inventoryState.filteredTotalSizeBytes;
   protected readonly filteredTotalSizeDisplay = this.inventoryState.filteredTotalSizeDisplay;
@@ -482,6 +487,7 @@ export class App {
   }
 
   private applySession(session: SessionResponse): void {
+    this.appVersion.set(session.app_version || '');
     if (!session.authenticated) {
       this.setUnauthenticatedState();
       return;
