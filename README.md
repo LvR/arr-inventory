@@ -17,6 +17,11 @@ This project scans a hardlink-based media layout and exposes a web UI to inspect
 
 The application is intentionally read-only. It helps identify mismatches and suspicious states without deleting, moving, or renaming files.
 
+
+## Preview
+
+<img src="./docs/preview.png" alt="ARR inventory preview" />
+
 ## Rules
 
 Each analysis run executes these jobs in order:
